@@ -39,3 +39,7 @@ func TestClient(t *testing.T) {
 
 	wg.Wait()
 }
+
+func Testmain(t *testing.T) {
+	OnceTopic()
+}

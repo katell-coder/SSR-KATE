@@ -28,6 +28,7 @@ func NewBroker() *BrokerImpl {
 		exit:   make(chan bool),
 		topics: make(map[string][]chan interface{}),
 	}
+
 }
 
 func (b *BrokerImpl) setConditions(capacity int) {
