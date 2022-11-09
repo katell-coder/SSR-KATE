@@ -19,8 +19,9 @@ func (fl fileLog) Write(data []byte) (int, error) {
 	defer f.Close()
 	return f.Write(data)
 }
+
 func Run(destination string) {
-	log = stlog.New(fileLog(destination), "go: ", stlog.LstdFlags)
+	log = stlog.New(fileLog(destination), "[go] - ", stlog.LstdFlags)
 }
 
 func RegisterHandlers() {
@@ -35,11 +36,11 @@ func RegisterHandlers() {
 			write(string(msg))
 		default:
 			w.WriteHeader(http.StatusMethodNotAllowed)
-
+			return
 		}
 	})
 }
+
 func write(message string) {
 	log.Printf("%v\n", message)
-
 }

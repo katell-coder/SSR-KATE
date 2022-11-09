@@ -2,14 +2,16 @@ package service
 
 import (
 	"context"
+	"distributed/registry"
 	"fmt"
 	"log"
 	"net/http"
-	"ss_distributed/registry"
 )
 
-func Start(ctx context.Context, host, port string, reg registry.Registration,
+func Start(ctx context.Context, host, port string,
+	reg registry.Registration,
 	registerHandlersFunc func()) (context.Context, error) {
+
 	registerHandlersFunc()
 	ctx = startService(ctx, reg.ServiceName, host, port)
 	err := registry.RegisterService(reg)
@@ -20,8 +22,9 @@ func Start(ctx context.Context, host, port string, reg registry.Registration,
 	return ctx, nil
 }
 
-func startService(ctx context.Context, name registry.ServiceName,
-	host string, port string) context.Context {
+func startService(ctx context.Context, serviceName registry.ServiceName,
+	host, port string) context.Context {
+
 	ctx, cancel := context.WithCancel(ctx)
 
 	var srv http.Server
@@ -35,16 +38,18 @@ func startService(ctx context.Context, name registry.ServiceName,
 		}
 		cancel()
 	}()
+
 	go func() {
-		fmt.Printf("%v started. Press any key to stop. \n", name)
+		fmt.Printf("%v started. Press any key to stop. \n", serviceName)
 		var s string
-		_, _ = fmt.Scanln(&s)
-		_ = srv.Shutdown(ctx)
+		fmt.Scanln(&s)
 		err := registry.ShutdownService(fmt.Sprintf("http://%s:%s", host, port))
 		if err != nil {
 			log.Println(err)
 		}
+		srv.Shutdown(ctx)
 		cancel()
 	}()
+
 	return ctx
 }

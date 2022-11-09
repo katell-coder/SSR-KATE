@@ -2,20 +2,24 @@ package main
 
 import (
 	"context"
+	"distributed/log"
+	"distributed/registry"
+	"distributed/service"
 	"fmt"
 	stlog "log"
-	"ss_distributed/log"
-	"ss_distributed/registry"
-	"ss_distributed/service"
 )
 
 func main() {
 	log.Run("./distributed.log")
 	host, port := "localhost", "4000"
 	serviceAddress := fmt.Sprintf("http://%s:%s", host, port)
+
 	r := registry.Registration{
-		ServiceName: "log Service",
-		ServiceURL:  serviceAddress,
+		ServiceName:      registry.LogService,
+		ServiceURL:       serviceAddress,
+		RequiredServices: make([]registry.ServiceName, 0),
+		ServiceUpdateURL: serviceAddress + "/services",
+		HeartbeatURL:     serviceAddress + "/heartbeat",
 	}
 	ctx, err := service.Start(
 		context.Background(),
@@ -24,10 +28,11 @@ func main() {
 		r,
 		log.RegisterHandlers,
 	)
+
 	if err != nil {
 		stlog.Fatalln(err)
 	}
 	<-ctx.Done()
-	fmt.Println("Shutting down server")
 
+	fmt.Println("Shutting down log service.")
 }
