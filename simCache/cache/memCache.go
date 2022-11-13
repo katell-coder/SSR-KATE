@@ -126,6 +126,7 @@ func (mc *memCache) Flush() bool {
 func (mc *memCache) Keys() int64 {
 	mc.locker.RLock()
 	defer mc.locker.RUnlock()
+
 	return int64(len(mc.values))
 }
 
@@ -140,6 +141,7 @@ func (mc *memCache) clearExpiredItem() {
 					mc.locker.Lock()
 					mc.del(key)
 					mc.locker.Unlock()
+
 				}
 			}
 
