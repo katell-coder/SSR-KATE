@@ -61,10 +61,10 @@ func (block *Block) GetHash() []byte {
 	return hash[:]
 }
 
-//生成一个新区块，需要当前区块存储的内容和前一区块的hash两个参数
+//生成一个新区块，需要当前区块存储的内容和前一区块的hash作为参数
 func NewBlock(data string, prevHash []byte) *Block {
 	//Bits和Nonce暂时不赋值，后面引入了挖矿机制后再解决这个问题。
-	block := Block{
+	block := &Block{
 		Version:       VERSION,
 		HashPrevBlock: prevHash,
 		Time:          int32(time.Now().Unix()),
@@ -72,11 +72,13 @@ func NewBlock(data string, prevHash []byte) *Block {
 		Nonce:         0,
 		Data:          []byte(data),
 	}
-	return &block
+
+	NewPow(block).Run()
+	return block
 }
 
 //生成创世纪区块，所谓创世纪区块是区块链的第一个区块。它存储的内容可以是任意内容，比如Genesis Block。
 // 由于它没有前一区块，所以不需要提供前一区块的hash值。
 func NewGenesisBlock() *Block {
-	return NewBlock("Genesis Block", []byte{})
+	return NewBlock("Genesis Block 0", []byte{})
 }

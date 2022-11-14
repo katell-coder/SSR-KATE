@@ -1,5 +1,7 @@
 package blockchain
 
+import "log"
+
 const (
 	TABLE_BLOCKS = "blocks"
 	BLOCK_LAST   = "last"
@@ -14,7 +16,7 @@ type BlockchainIterator struct {
 	//当前区块的hash
 	hashCurrent []byte
 	//区块链数据库
-	DB *Database
+	db *Database
 }
 
 //向区块链上增加一个区块
@@ -23,7 +25,8 @@ func (bc *BlockChain) AddBlock(data string) {
 	//校验区块链上是否已经有了创世纪区块
 	hashLast := bc.DB.Get(TABLE_BLOCKS, BLOCK_LAST)
 	if len(hashLast) == 0 {
-		//当前链上没有区块直接返回
+		//判断没有创世纪区块，需要先增加创世纪区块
+		log.Panic("No genesis block, Please add it first!")
 		return
 	}
 
@@ -67,6 +70,13 @@ func (bc *BlockChain) AddGenesisBlock() {
 	bc.DB.Set(TABLE_BLOCKS, BLOCK_LAST, blockHash)
 }
 
+//关闭区块链
+func (bc *BlockChain) Close() {
+	if bc.DB != nil {
+		bc.DB.Close()
+	}
+}
+
 // 获得遍历区块链的迭代子
 func (bc *BlockChain) Iterator() *BlockchainIterator {
 	hashLast := bc.DB.Get(TABLE_BLOCKS, BLOCK_LAST)
@@ -78,13 +88,12 @@ func (bc *BlockChain) Iterator() *BlockchainIterator {
 	//取出最后一个区块的hash，初始化迭代子，准备迭代
 	it := &BlockchainIterator{
 		hashCurrent: hashLast,
-		DB:          bc.DB,
+		db:          bc.DB,
 	}
 
 	return it
 }
 
-// 遍历区块链，返回当前区块，移向下一区块
 func (it *BlockchainIterator) Next() *Block {
 	if it.hashCurrent == nil {
 		//已经没有前一区块，到此结束
@@ -92,7 +101,7 @@ func (it *BlockchainIterator) Next() *Block {
 	}
 
 	//取出当前遍历到的区块
-	val := it.DB.Get(TABLE_BLOCKS, string(it.hashCurrent))
+	val := it.db.Get(TABLE_BLOCKS, string(it.hashCurrent))
 	block := Deserialize(val)
 	it.hashCurrent = block.HashPrevBlock
 
@@ -101,16 +110,12 @@ func (it *BlockchainIterator) Next() *Block {
 
 //统计区块链中区块的数量
 func (it *BlockchainIterator) GetCount() int {
-	var count int = 0
+	var count = 0
 	if it.hashCurrent == nil {
 		return count
 	}
-	for {
-		if it.Next() != nil {
-			count++
-			continue
-		}
-		break
+	for it.Next() != nil {
+		count++
 	}
 	return count
 }
